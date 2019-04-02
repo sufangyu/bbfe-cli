@@ -66,6 +66,12 @@ program
           message: '项目版本',
           default: '1.0.0',
         },
+        {
+          type: 'confirm',
+          name: 'hasFastclick',
+          message: '是否使用 Fastclick',
+          default: true,
+        }
       ];
       const answers = await inquirer.prompt(promptConfig);
       const spinner = ora(`正在下载模板, 源地址：${repo}`);
@@ -74,19 +80,25 @@ program
       download(repo, name)
         .then(() => {
           spinner.succeed();
-          const fileName = `${name}/package.json`;
+          const files = [
+            `${name}/package.json`,
+            `${name}/public/index.html`,
+          ];
+          const { version, description, author, hasFastclick} = answers;
           const meta = {
             name,
-            version: answers.version,
-            description: answers.description,
-            author: answers.author
+            version,
+            description,
+            author,
+            hasFastclick,
           };
-
-          if (fs.existsSync(fileName)) {
-            const content = fs.readFileSync(fileName).toString();
-            const result = handlebars.compile(content)(meta);
-            fs.writeFileSync(fileName, result);
-          }
+          files.forEach((file) => {
+            if (fs.existsSync(file)) {
+              const content = fs.readFileSync(file).toString();
+              const result = handlebars.compile(content)(meta);
+              fs.writeFileSync(file, result);
+            }
+          });
           console.log(symbols.success, chalk.green('项目初始化完成'));
           console.log(chalk.green(`    1. cd ${name} & npm install`));
           console.log(chalk.green(`    2. npm run serve`));
